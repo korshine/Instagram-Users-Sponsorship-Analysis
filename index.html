@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Users Sponsorship Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            cursor: pointer;
+            background-color: #f2f2f2;
+        }
+        .filter-group {
+            margin-bottom: 20px;
+        }
+        .filter-group label {
+            margin-right: 10px;
+        }
+        .filter-group select, .filter-group input {
+            padding: 5px;
+            margin-right: 10px;
+        }
+        .score {
+            font-weight: bold;
+        }
+        .helper-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background-color: #888;
+            color: white;
+            text-align: center;
+            border-radius: 50%;
+            font-size: 12px;
+            line-height: 16px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        .helper-icon:hover .tooltip {
+            display: block;
+        }
+        .tooltip {
+            display: none;
+            position: absolute;
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 5px;
+            border-radius: 4px;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Instagram Users Sponsorship Analysis</h1>
+        <div class="filter-group">
+            <label for="time-filter">Time Period:</label>
+            <select id="time-filter" onchange="filterTimePeriod()">
+                <option value="all">All Time</option>
+                <option value="this-week">This Week</option>
+                <option value="this-month">This Month</option>
+                <option value="this-year">This Year</option>
+            </select>
+            <label for="brand-category">Brand Category:</label>
+            <select id="brand-category" onchange="updateSponsorshipWorthiness()">
+                <option value="general">General</option>
+                <option value="fashion">Fashion</option>
+                <option value="tech">Tech</option>
+                <option value="travel">Travel</option>
+            </select>
+            <span class="score">Total Score: <span id="total-score">0%</span></span>
+        </div>
+        <table id="user-table">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)">Profile Name</th>
+                    <th onclick="sortTable(1)">Account Type</th>
+                    <th onclick="sortTable(2)">Promotion Initiated <span class="helper-icon" title="Sponsored posts initiated by the user">i</span></th>
+                    <th onclick="sortTable(3)">Promotion Participated <span class="helper-icon" title="Sponsored posts participated by the user. eg Hashtag usage, Challenges participated, etc">i</span></th>
+                    <th onclick="sortTable(4)">Total Followers</th>
+                    <th onclick="sortTable(5)">Primary Content Category <span class="helper-icon" title="Based on description and hashtag used">i</span></th>
+                    <th onclick="sortTable(6)">% of DAU active with profile <span class="helper-icon" title="This indicates what percentage of Instagram's daily active users (DAU) on the platform, is actively interacting with the profile">i</span></th>
+                    <th onclick="sortTable(7)">Profile CTASR <span class="helper-icon" title="Call To Action Success Rate: How many times Call to Action was taken, divided by the number of brands advertised to the profile">i</span></th>
+                    <th onclick="sortTable(8)">Network CTASR <span class="helper-icon" title="Network Call To Action Success Rate: How many times Call to Action was taken by the profiles within the network of this profile, divided by the number of brands advertised to the profile">i</span></th>
+                    <th onclick="sortTable(9)">Network Quality for Sponsorship <span class="helper-icon" title="How suitable is this person, and their network to be exposed to sponsorship">i</span></th>
+                </tr>
+            </thead>
+            <tbody id="user-table-body">
+                <!-- Data will be populated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const sampleData = [
+            {
+                profile_image: "https://randomuser.me/api/portraits/men/1.jpg",
+                handle_name: "@user1",
+                account_type: "Personal",
+                promotion_initiated: 5,
+                promotion_participated: 10,
+                followers: 5000,
+                content_category: "Travel",
+                followers_interacted: 60,
+                profile_ctasr: 70,
+                network_ctasr: 65,
+                sponsorship_score: 8
+            },
+            {
+                profile_image: "https://randomuser.me/api/portraits/women/2.jpg",
+                handle_name: "@user2",
+                account_type: "Business",
+                promotion_initiated: 8,
+                promotion_participated: 15,
+                followers: 12000,
+                content_category: "Personal",
+                followers_interacted: 75,
+                profile_ctasr: 80,
+                network_ctasr: 78,
+                sponsorship_score: 9
+            },
+            {
+                profile_image: "https://randomuser.me/api/portraits/men/3.jpg",
+                handle_name: "@user3",
+                account_type: "Personal",
+                promotion_initiated: 3,
+                promotion_participated: 7,
+                followers: 3000,
+                content_category: "Crypto",
+                followers_interacted: 55,
+                profile_ctasr: 60,
+                network_ctasr: 58,
+                sponsorship_score: 7
+            },
+            {
+                profile_image: "https://randomuser.me/api/portraits/women/4.jpg",
+                handle_name: "@user4",
+                account_type: "Business",
+                promotion_initiated: 10,
+                promotion_participated: 20,
+                followers: 15000,
+                content_category: "Motherhood",
+                followers_interacted: 85,
+                profile_ctasr: 90,
+                network_ctasr: 85,
+                sponsorship_score: 10
+            },
+            {
+                profile_image: "https://randomuser.me/api/portraits/men/5.jpg",
+                handle_name: "@user5",
+                account_type: "Personal",
+                promotion_initiated: 6,
+                promotion_participated: 12,
+                followers: 7000,
+                content_category: "Entertainment",
+                followers_interacted: 65,
+                profile_ctasr: 75,
+                network_ctasr: 70,
+                sponsorship_score: 8
+            },
+            {
+                profile_image: "https://randomuser.me/api/portraits/women/6.jpg",
+                handle_name: "@user6",
+                account_type: "Business",
+                promotion_initiated: 7,
+                promotion_participated: 13,
+                followers: 9000,
+                content_category: "Travel",
+                followers_interacted: 70,
+                profile_ctasr: 80,
+                network_ctasr: 75,
+                sponsorship_score: 9
+            },
+            {
+                profile_image: "https://randomuser.me/api/portraits/men/7.jpg",
+                handle_name: "@user7",
+                account_type: "Personal",
+                promotion_initiated: 4,
+                promotion_participated: 9,
+                followers: 4000,
+                content_category: "Tech",
+                followers_interacted: 60,
+                profile_ctasr: 65,
+                network_ctasr: 60,
+                sponsorship_score: 7
+            },
+            {
+                profile_image: "https://randomuser.me/api/portraits/women/8.jpg",
+                handle_name: "@user8",
+                account_type: "Business",
+                promotion_initiated: 9,
+                promotion_participated: 17,
+                followers: 14000,
+                content_category: "Fashion",
+                followers_interacted: 80,
+                profile_ctasr: 85,
+                network_ctasr: 82,
+                sponsorship_score: 9
+            },
+            {
+                profile_image: "https://randomuser.me/api/portraits/men/9.jpg",
+                handle_name: "@user9",
+                account_type: "Personal",
+                promotion_initiated: 6,
+                promotion_participated: 11,
+                followers: 6000,
+                content_category: "Crypto",
+                followers_interacted: 65,
+                profile_ctasr: 70,
+                network_ctasr: 68,
+                sponsorship_score: 8
+            },
+            {
+                profile_image: "https://randomuser.me/api/portraits/women/10.jpg",
+                handle_name: "@user10",
+                account_type: "Business",
+                promotion_initiated: 11,
+                promotion_participated: 22,
+                followers: 16000,
+                content_category: "Travel",
+                followers_interacted: 90,
+                profile_ctasr: 92,
+                network_ctasr: 88,
+                sponsorship_score: 10
+            }
+        ];
+
+        function populateTable(data) {
+            const tableBody = document.getElementById('user-table-body');
+            tableBody.innerHTML = '';
+            data.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><img src="${user.profile_image}" alt="Profile Image" style="width: 50px; height: 50px; border-radius: 50%;"> ${user.handle_name}</td>
+                    <td>${user.account_type}</td>
+                    <td>${user.promotion_initiated}</td>
+                    <td>${user.promotion_participated}</td>
+                    <td>${user.followers}</td>
+                    <td>${user.content_category}</td>
+                    <td>${user.followers_interacted}%</td>
+                    <td>${user.profile_ctasr}%</td>
+                    <td>${user.network_ctasr}%</td>
+                    <td>${user.sponsorship_score}/10</td>
+                `;
+                tableBody.appendChild(row);
+            });
+            updateSponsorshipWorthiness();
+        }
+
+        function sortTable(columnIndex) {
+            const table = document.getElementById('user-table');
+            const rows = Array.from(table.rows).slice(1);
+            const sortedRows = rows.sort((a, b) => {
+                const cellA = a.cells[columnIndex].innerText;
+                const cellB = b.cells[columnIndex].innerText;
+                return isNaN(cellA) || isNaN(cellB)
+                    ? cellA.localeCompare(cellB)
+                    : parseFloat(cellA) - parseFloat(cellB);
+            });
+            const tableBody = table.querySelector('tbody');
+            tableBody.innerHTML = '';
+            sortedRows.forEach(row => tableBody.appendChild(row));
+        }
+
+        function filterTimePeriod() {
+            // Logic to filter data based on time period
+            // For demonstration, shuffling the data to simulate the change
+            sampleData.sort(() => Math.random() - 0.5);
+            populateTable(sampleData); // Example, should be replaced with actual filtered data
+        }
+
+        function updateSponsorshipWorthiness() {
+            const brandCategory = document.getElementById('brand-category').value;
+            let totalScore = 0;
+            let count = 0;
+            sampleData.forEach(user => {
+                let score = user.sponsorship_score;
+                if (brandCategory === 'fashion') {
+                    score *= 1.1;
+                } else if (brandCategory === 'tech') {
+                    score *= 1.05;
+                } else if (brandCategory === 'travel') {
+                    score *= 1.2;
+                }
+                totalScore += score;
+                count++;
+            });
+            const averageScore = (totalScore / (count * 10)) * 100;
+            document.getElementById('total-score').innerText = `${averageScore.toFixed(2)}%`;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => populateTable(sampleData));
+    </script>
+</body>
+</html>
